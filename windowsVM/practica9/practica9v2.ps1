@@ -1,23 +1,3 @@
-#Requires -RunAsAdministrator
-<#
-.SYNOPSIS
-    Practica 09 - Hardening de Active Directory, RBAC, FGPP y MFA
-    Script de administracion con menu interactivo
-
-.DESCRIPTION
-    Implementa:
-      - Delegacion de control y RBAC (4 roles)
-      - Directivas de contrasena ajustada (FGPP)
-      - Auditoria de eventos
-      - Script de monitoreo (extraccion de eventos 4625)
-      - Configuracion de MFA TOTP (Google Authenticator)
-      - Tests de verificacion de todos los componentes
-
-.NOTES
-    Requiere: Windows Server 2016/2019/2022, modulo ActiveDirectory, RSAT
-    Ejecutar como: Administrador del dominio
-#>
-
 # ============================================================
 #  CONFIGURACION GLOBAL - Ajusta estos valores a tu entorno
 # ============================================================
