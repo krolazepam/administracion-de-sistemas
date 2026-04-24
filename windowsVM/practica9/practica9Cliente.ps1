@@ -8,8 +8,8 @@ function Print-Err  { param($msg) Write-Host "[ERR]  $msg" -ForegroundColor Red 
 $DOMINIO       = "empresa.local"
 $IP_SERVIDOR   = "192.168.10.150"
 $MULTIOTP_EXE  = "C:\Program Files\multiOTP\multiotp.exe"
-$MULTIOTP_MSI  = "$PSScriptRoot\..\lib\Practica9\multiOTP.msi"
-$VCREDIST_EXE  = "$PSScriptRoot\..\lib\Practica9\VC_redist.x64.exe"
+$MULTIOTP_MSI  = . ".\funciones\multiOTP.msi"
+$VCREDIST_EXE  = . ".\funciones\VC_redist.x64.exe"
 $MULTIOTP_REG  = "Registry::HKEY_CLASSES_ROOT\CLSID\{FCEFDFAB-B0A1-4C4D-8B2B-4FF4E0A3D978}"
 
 
