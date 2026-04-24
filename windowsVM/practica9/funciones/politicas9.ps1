@@ -1,4 +1,4 @@
-$RUTA_REPORTE = "$env:USERPROFILE\reporte_accesos.txt"
+$RUTA_REPORTE = . ".\funciones\reporte_accesos.txt"
 
 
 function Crear-Grupos {
