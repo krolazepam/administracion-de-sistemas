@@ -92,7 +92,7 @@ function Unir-Dominio {
 
     Write-Host ""
     Print-Info "Introduce las credenciales de administrador del dominio."
-    $credencial = Get-Credential -Message "Credenciales para unirse a $DOMINIO (ej: EMPRESA\dleyva)"
+    $credencial = Get-Credential -Message "Credenciales para unirse a $DOMINIO (ej: EMPRESA\midori)"
 
     Print-Info "Uniendo equipo al dominio $DOMINIO..."
     try {
@@ -194,7 +194,7 @@ function Importar-Tokens-Servidor {
     }
 
     Print-Info "Introduce las credenciales de administrador del servidor."
-    $usuarioRed = Read-Host "Usuario (ej: EMPRESA\dleyva)"
+    $usuarioRed = Read-Host "Usuario (ej: EMPRESA\midori)"
     $passseg    = Read-Host "Contrasena" -AsSecureString
     $passTxt    = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
                       [Runtime.InteropServices.Marshal]::SecureStringToBSTR($passseg))
@@ -209,7 +209,7 @@ function Importar-Tokens-Servidor {
     }
     Print-Ok "Conexion establecida."
 
-    $rutaRemota = "\\$ip\c$\Users\dleyva\claves_mfa.txt"
+    $rutaRemota = "\\$ip\c$\Users\midori\claves_mfa.txt"
 
     if (-not (Test-Path $rutaRemota)) {
         Print-Err "No se encontro el archivo en: $rutaRemota"
@@ -281,7 +281,7 @@ function Mostrar-Instrucciones {
     Write-Host "y las registra localmente. Solo necesitas la IP del servidor"
     Write-Host "y credenciales de administrador de dominio."
     Write-Host ""
-    Write-Host "Al iniciar sesion usa: EMPRESA\dleyva"
+    Write-Host "Al iniciar sesion usa: EMPRESA\midori"
     Write-Host "Se pedira contrasena y luego el codigo de Google Authenticator."
     Write-Host ""
 }
