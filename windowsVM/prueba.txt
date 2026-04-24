@@ -1,4 +1,8 @@
  scp "C:\Users\annao\OneDrive\Desktop\administracion-de-sistemas\windowsVM\prueba.txt" Administrador@172.20.10.3:Desktop\ssh
- scp "C:\Users\annao\OneDrive\Desktop\administracion-de-sistemas\windowsVM\tarea5ftp.ps1" Administrador@192.168.100.53:Desktop\ssh
 
-crearUsuarioFTP -Username "prueba2" -Password "Password123" -Group "reprobados"
+ scp "C:\Users\annao\OneDrive\Desktop\administracion-de-sistemas\windowsVM\practica8\tarea8v2.ps1" Administrador@172.20.10.5:Desktop\administracion-de-sistemas\windowsVM\practica8
+
+scp "C:\Users\annao\OneDrive\Desktop\administracion-de-sistemas\windowsVM\practica8\maldad.ps1" Administrador@10.214.43.254:Desktop\administracion-de-sistemas\windowsVM
+
+ scp "C:\Users\annao\OneDrive\Desktop\administracion-de-sistemas\windowsVM\tarea7.ps1" Administrador@192.168.100.142:Desktop\ssh
+

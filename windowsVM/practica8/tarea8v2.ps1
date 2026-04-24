@@ -19,13 +19,13 @@ $PASSWORD      = "P@ssw0rd123!"
 # FUNCIONES DE APOYO
 # -----------------------------------------------
 function Print-Ok   { param($msg) Write-Host "[OK]   $msg" -ForegroundColor Green  }
-function Print-Info { param($msg) Write-Host "[INFO] $msg" -ForegroundColor Cyan   }
+function Print-Info { param($msg) Write-Host "[INFO] $msg" -ForegroundColor Magenta}
 function Print-Warn { param($msg) Write-Host "[WARN] $msg" -ForegroundColor Yellow }
 function Print-Err  { param($msg) Write-Host "[ERR]  $msg" -ForegroundColor Red    }
 
 
 # -----------------------------------------------
-# 1. INICIALIZAR ENTORNO
+# INICIALIZAR ENTORNO
 #    Instala roles y promueve el servidor a DC
 #    Solo se ejecuta una vez. Reinicia el servidor.
 # -----------------------------------------------
@@ -47,7 +47,7 @@ function inicializarEntorno {
 
 
 # -----------------------------------------------
-# 2. CREAR UOs, GRUPOS Y USUARIOS DESDE CSV
+# CREAR UOs, GRUPOS Y USUARIOS DESDE CSV
 #    El CSV debe tener columnas:
 #    Nombre, Apellido, Usuario, Departamento
 #    Sin acentos ni caracteres especiales en el CSV
@@ -124,38 +124,51 @@ function crearEstructuraAD {
 
 
 # -----------------------------------------------
-# 3. HORARIOS DE INICIO DE SESION (LOGON HOURS)
+# HORARIOS DE INICIO DE SESION (LOGON HOURS)
 #    + GPO para forzar cierre de sesion
 #    Cuates:   08:00 - 15:00
 #    NoCuates: 15:00 - 02:00 (dia siguiente)
 # -----------------------------------------------
 function asignarHorarios {
-    param(
-        [string]$Grupo,
-        [int]$HoraInicio,
-        [int]$HoraFin
-    )
-
-    Print-Info "Configurando horario para '$Grupo': ${HoraInicio}h - ${HoraFin}h"
-
+param([string]$Grupo, [int]$HoraInicio, [int]$HoraFin)
+ 
+    # AD guarda LogonHours en UTC. Calculamos el offset automaticamente.
+    $offsetHoras = [int][System.TimeZoneInfo]::Local.GetUtcOffset([DateTime]::Now).TotalHours
+    $inicioUTC   = $HoraInicio - $offsetHoras
+    $finUTC      = $HoraFin    - $offsetHoras
+ 
+    Print-Info "Horario '$Grupo': ${HoraInicio}h-${HoraFin}h local -> ${inicioUTC}h-${finUTC}h UTC (offset $offsetHoras h)"
+ 
     $bytes = [byte[]](,0x00 * 21)
-
+ 
     for ($dia = 0; $dia -lt 7; $dia++) {
-        $finDelDia = [Math]::Min($HoraFin, 24)
-        for ($hora = $HoraInicio; $hora -lt $finDelDia; $hora++) {
+        # Horas del mismo dia en UTC
+        $ini = [Math]::Max($inicioUTC, 0)
+        $fin = [Math]::Min($finUTC, 24)
+        for ($hora = $ini; $hora -lt $fin; $hora++) {
             $bit = ($dia * 24) + $hora
             $bytes[[Math]::Floor($bit / 8)] = $bytes[[Math]::Floor($bit / 8)] -bor (1 -shl ($bit % 8))
         }
-
-        if ($HoraFin -gt 24) {
+ 
+        # Horas que pasan la medianoche UTC (ej: finUTC = 34 -> horas 0-10 del dia siguiente)
+        if ($finUTC -gt 24) {
             $diaSig = ($dia + 1) % 7
-            for ($hora = 0; $hora -lt ($HoraFin - 24); $hora++) {
+            for ($hora = 0; $hora -lt ($finUTC - 24); $hora++) {
                 $bit = ($diaSig * 24) + $hora
                 $bytes[[Math]::Floor($bit / 8)] = $bytes[[Math]::Floor($bit / 8)] -bor (1 -shl ($bit % 8))
             }
         }
+ 
+        # Si inicioUTC es negativo empieza en el dia anterior
+        if ($inicioUTC -lt 0) {
+            $diaAnt = ($dia - 1 + 7) % 7
+            for ($hora = (24 + $inicioUTC); $hora -lt 24; $hora++) {
+                $bit = ($diaAnt * 24) + $hora
+                $bytes[[Math]::Floor($bit / 8)] = $bytes[[Math]::Floor($bit / 8)] -bor (1 -shl ($bit % 8))
+            }
+        }
     }
-
+ 
     Get-ADGroupMember -Identity $Grupo | Where-Object { $_.objectClass -eq "user" } | ForEach-Object {
         Set-ADUser -Identity $_.SamAccountName -Replace @{ logonHours = $bytes }
         Print-Ok "  Horario aplicado: $($_.SamAccountName)"
@@ -163,39 +176,33 @@ function asignarHorarios {
 }
 
 function configurarHorarios {
+    # Horarios en hora LOCAL, el script convierte a UTC automaticamente
     asignarHorarios -Grupo "Cuates"   -HoraInicio 8  -HoraFin 15
     asignarHorarios -Grupo "NoCuates" -HoraInicio 15 -HoraFin 26
-
+ 
     Print-Info "Creando GPO para forzar cierre de sesion al expirar horario..."
-
     $nombreGPO = "GPO-Forzar-Logoff"
-
+ 
     if (-not (Get-GPO -Name $nombreGPO -ErrorAction SilentlyContinue)) {
         New-GPO -Name $nombreGPO | Out-Null
         Print-Ok "GPO creada: $nombreGPO"
-    } else {
-        Print-Warn "GPO ya existe: $nombreGPO"
-    }
-
+    } else { Print-Warn "GPO ya existe: $nombreGPO" }
+ 
     try {
         New-GPLink -Name $nombreGPO -Target $DC_PATH -LinkEnabled Yes -ErrorAction Stop
         Print-Ok "GPO vinculada al dominio."
-    } catch {
-        Print-Warn "El vinculo de GPO ya existe."
-    }
-
+    } catch { Print-Warn "El vinculo de GPO ya existe." }
+ 
     Set-GPRegistryValue -Name $nombreGPO `
-        -Key       "HKLM\System\CurrentControlSet\Services\LanmanServer\Parameters" `
-        -ValueName "EnableForcedLogOff" `
-        -Type      DWord `
-        -Value     1
-
+        -Key "HKLM\System\CurrentControlSet\Services\LanmanServer\Parameters" `
+        -ValueName "EnableForcedLogOff" -Type DWord -Value 1
+ 
     Print-Ok "Horarios y GPO de logoff forzado configurados."
 }
 
 
 # -----------------------------------------------
-# 4. FSRM: CUOTAS Y APANTALLAMIENTO DE ARCHIVOS
+# FSRM: CUOTAS Y APANTALLAMIENTO DE ARCHIVOS
 #    Cuates:   10 MB (cuota dura)
 #    NoCuates:  5 MB (cuota dura)
 #    Bloquea: .mp3 .mp4 .avi .exe .msi .bat
@@ -268,7 +275,7 @@ function configurarFSRM {
 
 
 # -----------------------------------------------
-# 5. APPLOCKER
+# APPLOCKER
 #    Cuates:   PERMITEN notepad.exe (por ruta)
 #    NoCuates: BLOQUEAN notepad.exe (por hash SHA256)
 #              El hash bloquea aunque renombren el .exe
@@ -353,7 +360,7 @@ function configurarAppLocker {
 
 
 # -----------------------------------------------
-# 6. VERIFICACION
+# VERIFICACION
 #    Revisa el estado de todos los componentes
 # -----------------------------------------------
 function verificar {
@@ -407,6 +414,21 @@ function verificar {
     Write-Host ""
 }
 
+function mostrarAlmacenamiento {
+    Import-Module FileServerResourceManager
+
+    Get-FsrmQuota -Path "C:\Perfiles\*" | ForEach-Object {
+        [PSCustomObject]@{
+            Usuario   = Split-Path $_.Path -Leaf
+            Plantilla = $_.Template
+            LimiteMB  = [Math]::Round($_.Size     / 1MB, 2)
+            UsadoMB   = [Math]::Round($_.Usage    / 1MB, 2)
+            PicoMB    = [Math]::Round($_.PeakUsage/ 1MB, 2)
+            LibreMB   = [Math]::Round(($_.Size - $_.Usage) / 1MB, 2)
+            PorcentoUsado = [Math]::Round(($_.Usage / $_.Size) * 100, 1)
+        }
+    } | Format-Table -AutoSize
+}
 
 # -----------------------------------------------
 # MENU PRINCIPAL
@@ -419,12 +441,13 @@ function menuPrincipal {
         Write-Host "   Aplicaciones en Active Directory            " -ForegroundColor Red
         Write-Host "-----------------------------------------------" -ForegroundColor Yellow
         Write-Host "  1. Inicializar entorno  (solo una vez)"
-        Write-Host "  2. Crear UOs, grupos y usuarios desde CSV"
-        Write-Host "  3. Configurar horarios de sesion (LogonHours)"
+        Write-Host "  2. Crear UOs, grupos y usuarios desde el archivo .CSV"
+        Write-Host "  3. Configurar horarios de sesion "
         Write-Host "  4. Configurar FSRM (cuotas + apantallamiento)"
-        Write-Host "  5. Configurar AppLocker"
+        Write-Host "  5. Configurar bloqueo de apps"
         Write-Host "  6. Verificar entorno"
-        Write-Host "  7. Salir"
+        Write-Host "  7. Ver estado del almacenamiento"
+        Write-Host "  8. Salir"
         Write-Host "-----------------------------------------------" -ForegroundColor Yellow
 
         $op = Read-Host "Selecciona una opcion"
@@ -436,7 +459,8 @@ function menuPrincipal {
             "4" { configurarFSRM;      Read-Host "`nEnter para continuar" }
             "5" { configurarAppLocker; Read-Host "`nEnter para continuar" }
             "6" { verificar;           Read-Host "`nEnter para continuar" }
-            "7" { Write-Host "Saliendo..."; return }
+            "7" { mostrarAlmacenamiento; Read-Host "`nEnter para continuar" }
+            "8" { Write-Host "Saliendo..."; return }
             default { Print-Warn "Opcion no valida."; Start-Sleep -Seconds 1 }
         }
     } while ($true)

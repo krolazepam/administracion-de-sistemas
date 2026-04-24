@@ -1,5 +1,5 @@
-$DC_PATH       = "DC=empresa,DC=local"
-$RUTA_REPORTE  = "C:\Users\Administrador\reporte_accesos.txt"
+$RUTA_REPORTE = "$env:USERPROFILE\reporte_accesos.txt"
+
 
 function Crear-Grupos {
     Print-Info "Verificando grupos de seguridad..."
@@ -9,7 +9,7 @@ function Crear-Grupos {
         New-ADGroup -Name "GrupoAdmins" `
             -GroupScope    Global `
             -GroupCategory Security `
-            -Path          "OU=Admins,$DC_PATH"
+            -Path          $DC_PATH
         Print-Ok "Grupo creado: GrupoAdmins"
     } else {
         Print-Warn "Grupo ya existe: GrupoAdmins (se omite)"
@@ -27,19 +27,9 @@ function Crear-Grupos {
     }
 }
 
-function Poblar-Grupos {
-    Print-Info "Agregando usuarios a los grupos..."
 
-    # Admins al GrupoAdmins
-    $admins = @("admin_identidad", "admin_storage", "admin_politicas", "admin_auditoria")
-    foreach ($admin in $admins) {
-        try {
-            Add-ADGroupMember -Identity "GrupoAdmins" -Members $admin -ErrorAction Stop
-            Print-Ok "  $admin → GrupoAdmins"
-        } catch {
-            Print-Warn "  $admin ya es miembro de GrupoAdmins (se omite)"
-        }
-    }
+function Poblar-Grupos {
+    Print-Info "Agregando usuarios a GrupoUsuarios..."
 
     $usuarios = @()
     $usuarios += Get-ADUser -Filter * -SearchBase "OU=Cuates,$DC_PATH" -ErrorAction SilentlyContinue
@@ -48,12 +38,13 @@ function Poblar-Grupos {
     foreach ($u in $usuarios) {
         try {
             Add-ADGroupMember -Identity "GrupoUsuarios" -Members $u.SamAccountName -ErrorAction Stop
-            Print-Ok "  $($u.SamAccountName) → GrupoUsuarios"
+            Print-Ok "  $($u.SamAccountName) - GrupoUsuarios"
         } catch {
-            Print-Warn "  $($u.SamAccountName) ya es miembro de GrupoUsuarios (se omite)"
+            Print-Warn "  $($u.SamAccountName) ya es miembro (se omite)"
         }
     }
 }
+
 
 function Configurar-FGPP {
     Print-Info "Configurando politicas de contrasena (FGPP)..."
@@ -72,7 +63,6 @@ function Configurar-FGPP {
             -LockoutThreshold            3 `
             -LockoutDuration             "00:30:00" `
             -LockoutObservationWindow    "00:30:00"
-
         Print-Ok "FGPP-Admins creada (minimo 12 chars)"
     } else {
         Print-Warn "FGPP-Admins ya existe (se omite)"
@@ -92,7 +82,6 @@ function Configurar-FGPP {
             -LockoutThreshold            3 `
             -LockoutDuration             "00:30:00" `
             -LockoutObservationWindow    "00:30:00"
-
         Print-Ok "FGPP-Usuarios creada (minimo 8 chars)"
     } else {
         Print-Warn "FGPP-Usuarios ya existe (se omite)"
@@ -104,16 +93,17 @@ function Configurar-FGPP {
         Add-ADFineGrainedPasswordPolicySubject -Identity "FGPP-Admins" -Subjects "GrupoAdmins" -ErrorAction Stop
         Print-Ok "FGPP-Admins asignada a GrupoAdmins"
     } catch {
-        Print-Warn "FGPP-Admins ya estaba asignada a GrupoAdmins (se omite)"
+        Print-Warn "FGPP-Admins ya estaba asignada (se omite)"
     }
 
     try {
         Add-ADFineGrainedPasswordPolicySubject -Identity "FGPP-Usuarios" -Subjects "GrupoUsuarios" -ErrorAction Stop
         Print-Ok "FGPP-Usuarios asignada a GrupoUsuarios"
     } catch {
-        Print-Warn "FGPP-Usuarios ya estaba asignada a GrupoUsuarios (se omite)"
+        Print-Warn "FGPP-Usuarios ya estaba asignada (se omite)"
     }
 }
+
 
 function Configurar-Auditoria {
     Print-Info "Activando auditoria de eventos..."
@@ -124,6 +114,7 @@ function Configurar-Auditoria {
     auditpol /set /subcategory:"Sistema de archivos" /success:enable /failure:enable | Out-Null
     Print-Ok "Auditoria activada: Sistema de archivos (aciertos y errores)"
 }
+
 
 function Generar-Reporte {
     Print-Info "Generando reporte de accesos denegados..."
@@ -136,7 +127,6 @@ function Generar-Reporte {
 
     if (-not $eventos) {
         Print-Warn "No se encontraron eventos de acceso denegado (ID 4625)."
-        Print-Info "Genera intentos fallidos de login y vuelve a ejecutar esta opcion."
         return
     }
 
@@ -153,14 +143,15 @@ function Generar-Reporte {
     Out-File $RUTA_REPORTE -Encoding UTF8
 
     Print-Ok "Reporte generado en: $RUTA_REPORTE"
-    Print-Info "Contenido del reporte:"
     Write-Host ""
     Get-Content $RUTA_REPORTE
 }
 
+
 function Configurar-Politicas {
+    Clear-Host
+    Write-Host "========== Configuracion de Politicas y Auditoria =========="
     Write-Host ""
-    Write-Host "--- Configuracion de Politicas y Auditoria ---" -ForegroundColor Yellow
 
     Crear-Grupos
     Write-Host ""
@@ -169,8 +160,6 @@ function Configurar-Politicas {
     Configurar-FGPP
     Write-Host ""
     Configurar-Auditoria
-    Write-Host ""
-    Generar-Reporte
 
     Write-Host ""
     Print-Ok "Politicas y auditoria configuradas correctamente."
