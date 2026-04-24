@@ -12,7 +12,9 @@ function Print-Err  { param($msg) Write-Host "[ERR]  $msg" -ForegroundColor Red 
 
 function Ver-Usuarios-Roles {
     Clear-Host
-    Write-Host "========== Usuarios y Roles Actuales =========="
+    Write-Host "---------------------------------" -BackgroundColor Green -ForegroundColor Black
+    Write-Host "    Usuarios y roles actuales " -ForegroundColor Green
+    Write-Host "---------------------------------" -BackgroundColor Green -ForegroundColor Black
     Write-Host ""
 
     $usuarios = @()
@@ -96,9 +98,9 @@ function Seleccionar-Rol {
 function Administrar-Usuarios {
     do {
         Clear-Host
-        Write-Host "---------------------------------"
-        Write-Host "      Administrar usuarios "
-        Write-Host "---------------------------------"
+        Write-Host "---------------------------------" -BackgroundColor Cyan -ForegroundColor Black
+        Write-Host "      Administrar usuarios " -ForegroundColor Cyan
+        Write-Host "---------------------------------" -BackgroundColor Cyan -ForegroundColor Black
         Write-Host ""
         Write-Host "  [1] Ver usuarios y sus roles actuales"
         Write-Host "  [2] Asignar rol a usuario"
