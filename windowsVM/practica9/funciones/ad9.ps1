@@ -190,30 +190,30 @@ function Habilitar-RDP-Usuarios {
 }
 
 
-function Crear-AdminDleyva {
-    Print-Info "Verificando usuario administrador dleyva..."
+function Crear-AdminMidori {
+    Print-Info "Verificando usuario administrador midori..."
 
-    $existe = Get-ADUser -Filter "SamAccountName -eq 'dleyva'" -ErrorAction SilentlyContinue
+    $existe = Get-ADUser -Filter "SamAccountName -eq 'midori'" -ErrorAction SilentlyContinue
     if (-not $existe) {
-        $pass = Read-Host "Contrasena para dleyva" -AsSecureString
+        $pass = Read-Host "Contrasena para midori" -AsSecureString
         New-ADUser `
-            -Name              "dleyva" `
-            -SamAccountName    "dleyva" `
-            -UserPrincipalName "dleyva@$DOMINIO" `
+            -Name              "midori" `
+            -SamAccountName    "midori" `
+            -UserPrincipalName "midori@$DOMINIO" `
             -AccountPassword   $pass `
             -Enabled           $true
-        Print-Ok "dleyva creado."
+        Print-Ok "midori creado."
     } else {
-        Print-Warn "dleyva ya existe en AD."
+        Print-Warn "midori ya existe en AD."
     }
 
     $enDomainAdmins = Get-ADGroupMember "Admins. del dominio" -ErrorAction SilentlyContinue |
-                      Where-Object { $_.SamAccountName -eq "dleyva" }
+                      Where-Object { $_.SamAccountName -eq "midori" }
     if (-not $enDomainAdmins) {
-        Add-ADGroupMember -Identity "Admins. del dominio" -Members "dleyva"
-        Print-Ok "dleyva agregado a Admins. del dominio."
+        Add-ADGroupMember -Identity "Admins. del dominio" -Members "midori"
+        Print-Ok "midori agregado a Admins. del dominio."
     } else {
-        Print-Warn "dleyva ya es miembro de Admins. del dominio (se omite)."
+        Print-Warn "midori ya es miembro de Admins. del dominio (se omite)."
     }
 }
 
@@ -223,7 +223,7 @@ function Configurar-AD {
     Write-Host "========== Configuracion de Active Directory =========="
     Write-Host ""
 
-    Crear-AdminDleyva
+    Crear-Adminmidori
     Write-Host ""
     Crear-OUs
     Write-Host ""
