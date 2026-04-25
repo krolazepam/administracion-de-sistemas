@@ -236,7 +236,7 @@ function Configurar-PerfilesMoviles {
         Print-Warn "Compartido 'Perfiles' ya existe (se omite)."
     }
 
-    $usuarios = @("dleyva")
+    $usuarios = @("midori")
     if (Test-Path $CSV_USUARIOS) {
         $usuarios += (Import-Csv $CSV_USUARIOS).Usuario
     }
