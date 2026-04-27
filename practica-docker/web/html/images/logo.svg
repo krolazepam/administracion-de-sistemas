@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <!-- Contenedor (caja) -->
+  <rect x="15" y="25" width="70" height="50" rx="6" fill="url(#grad)" opacity="0.9"/>
+  <!-- Capas representando contenedores apilados -->
+  <rect x="20" y="35" width="25" height="8" rx="2" fill="#0f172a" opacity="0.7"/>
+  <rect x="50" y="35" width="25" height="8" rx="2" fill="#0f172a" opacity="0.7"/>
+  <rect x="20" y="47" width="25" height="8" rx="2" fill="#0f172a" opacity="0.7"/>
+  <rect x="50" y="47" width="25" height="8" rx="2" fill="#0f172a" opacity="0.7"/>
+  <rect x="20" y="59" width="55" height="8" rx="2" fill="#0f172a" opacity="0.7"/>
+  <!-- Círculo superior (servicio) -->
+  <circle cx="50" cy="20" r="6" fill="#22c55e"/>
+</svg>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Infraestructura | Práctica Docker</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" type="image/svg+xml" href="/images/logo.svg">
+</head>
+<body>
+    <header class="hero">
+        <img src="/images/logo.svg" alt="Logo infraestructura" class="logo">
+        <h1>Panel de Infraestructura</h1>
+        <p class="subtitle">Migración a contenedores · práctica de servicios esenciales</p>
+    </header>
+
+    <main class="container">
+        <section class="card-grid">
+            <article class="card">
+                <div class="card-icon">🌐</div>
+                <h2>Servidor Web</h2>
+                <p>Nginx sobre Alpine, ejecutando como usuario no-administrativo y sin firmas del servidor expuestas.</p>
+                <span class="badge badge-ok">ACTIVO</span>
+            </article>
+
+            <article class="card">
+                <div class="card-icon">🗄️</div>
+                <h2>Base de Datos</h2>
+                <p>PostgreSQL con volumen persistente <code>db_data</code> y respaldos automatizados al host.</p>
+                <span class="badge badge-ok">ACTIVO</span>
+            </article>
+
+            <article class="card">
+                <div class="card-icon">📁</div>
+                <h2>Servidor FTP</h2>
+                <p>Pure-FTPd para carga de instaladores. Comparte volumen <code>web_content</code> con el servidor web.</p>
+                <span class="badge badge-ok">ACTIVO</span>
+            </article>
+        </section>
+
+        <section class="info">
+            <h3>Detalles técnicos</h3>
+            <ul>
+                <li>Red personalizada: <code>infra_red</code> (172.20.0.0/16)</li>
+                <li>Volúmenes persistentes: <code>db_data</code>, <code>web_content</code></li>
+                <li>Límites de recursos: 512MB RAM, 0.5 CPU por contenedor</li>
+                <li>Comunicación entre servicios por nombre de contenedor</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>Servido desde contenedor Nginx no-root · puerto 8080</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,131 @@
+# ============================================================
+# Práctica: Migración de servicios esenciales a contenedores
+# ============================================================
+# Orquesta 4 servicios: web (nginx), db (postgres), ftp (pure-ftpd)
+# y backup (sidecar con cron). Todos conectados a la red
+# personalizada infra_red (172.20.0.0/16).
+
+services:
+
+  # -----------------------------
+  # SERVIDOR WEB (Nginx Alpine)
+  # -----------------------------
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: practica/web:1.0
+    container_name: infra_web
+    restart: unless-stopped
+    ports:
+      - "8080:8080"          # Nginx escucha en 8080 (usuario no-root)
+    volumes:
+      - web_content:/usr/share/nginx/html
+    networks:
+      infra_red:
+        ipv4_address: 172.20.0.10
+    depends_on:
+      - db
+    # Límites de recursos (Prueba 10.4)
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.50
+
+  # -----------------------------
+  # BASE DE DATOS (PostgreSQL)
+  # -----------------------------
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    image: practica/db:1.0
+    container_name: infra_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-appuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme123}
+      POSTGRES_DB: ${DB_NAME:-appdb}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      infra_red:
+        ipv4_address: 172.20.0.20
+    # NO exponemos el puerto 5432 al host: solo red interna
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.75
+
+  # -----------------------------
+  # SERVIDOR FTP (pure-ftpd)
+  # -----------------------------
+  ftp:
+    build:
+      context: ./ftp
+      dockerfile: Dockerfile
+    image: practica/ftp:1.0
+    container_name: infra_ftp
+    restart: unless-stopped
+    ports:
+      - "21:21"
+      - "30000-30009:30000-30009"   # rango pasivo
+    environment:
+      FTP_USER: ${FTP_USER:-ftpuser}
+      FTP_PASS: ${FTP_PASS:-ftppass123}
+      PASV_ADDRESS: ${PASV_ADDRESS:-127.0.0.1}
+    volumes:
+      # MISMO volumen que el web -> permite Prueba 10.3
+      - web_content:/home/ftpuser
+    networks:
+      infra_red:
+        ipv4_address: 172.20.0.30
+    mem_limit: 256m
+    cpus: 0.25
+
+  # -----------------------------
+  # BACKUP AUTOMATIZADO (sidecar)
+  # -----------------------------
+  backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    image: practica/backup:1.0
+    container_name: infra_backup
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER:-appuser}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme123}
+      DB_NAME: ${DB_NAME:-appdb}
+      # Cron: cada hora en punto. Para pruebas, usa "*/2 * * * *" (cada 2 min)
+      BACKUP_CRON: ${BACKUP_CRON:-0 * * * *}
+    volumes:
+      # bind mount -> respaldo llega a la carpeta del HOST
+      - ./backups:/backups
+    networks:
+      - infra_red
+    depends_on:
+      - db
+    mem_limit: 128m
+    cpus: 0.10
+
+# ============================================================
+# RED PERSONALIZADA (bridge con subred específica)
+# ============================================================
+networks:
+  infra_red:
+    name: infra_red
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+# ============================================================
+# VOLÚMENES PERSISTENTES NOMBRADOS
+# ============================================================
+volumes:
+  db_data:
+    name: db_data
+  web_content:
+    name: web_content

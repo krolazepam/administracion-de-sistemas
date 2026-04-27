@@ -1,0 +1,1 @@
+docker inspect infra_web --format '{{.HostConfig.Memory}} {{.HostConfig.MemoryReservation}} {{.HostConfig.NanoCpus}}'

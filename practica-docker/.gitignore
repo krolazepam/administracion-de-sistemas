@@ -1,0 +1,10 @@
+# Variables con credenciales reales
+.env
+
+# Respaldos generados (pueden ser grandes)
+backups/*.sql.gz
+backups/*.sql
+!backups/.gitkeep
+
+# Logs locales
+*.log
