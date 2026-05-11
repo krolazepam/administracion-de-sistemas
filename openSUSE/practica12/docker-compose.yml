@@ -1,0 +1,106 @@
+services:
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: mailserver
+    hostname: mail.reprobados.com
+    env_file: mailserver.env
+    ports:
+      - "25:25"
+      - "143:143"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - mail_data:/var/mail
+      - mail_state:/var/mail-state
+      - ./logs:/var/log/mail:z
+      - ./config:/tmp/docker-mailserver:z
+      - /etc/localtime:/etc/localtime:ro
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    stop_grace_period: 1m
+    healthcheck:
+      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
+      timeout: 3s
+      retries: 0
+    networks:
+      - mail_net
+
+  roundcube:
+    image: roundcube/roundcubemail:latest-apache
+    container_name: roundcube
+    volumes:
+      - ./webmail/config.inc.php:/var/www/html/config/config.inc.php:z
+      - roundcube_temp:/tmp/roundcube-temp
+    environment:
+      - RC_DB_USER=${RC_DB_USER}
+      - RC_DB_PASSWORD=${RC_DB_PASSWORD}
+      - RC_DB_NAME=${RC_DB_NAME}
+      - RC_DES_KEY=${RC_DES_KEY}
+      - ROUNDCUBEMAIL_DEFAULT_HOST=tls://mailserver
+      - ROUNDCUBEMAIL_DEFAULT_PORT=143
+      - ROUNDCUBEMAIL_SMTP_SERVER=tls://mailserver
+      - ROUNDCUBEMAIL_SMTP_PORT=587
+      - ROUNDCUBEMAIL_SMTP_USER=%u
+      - ROUNDCUBEMAIL_SMTP_PASS=%p
+    depends_on:
+      roundcube_db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - mail_net
+
+  roundcube_db:
+    image: mariadb:10.11
+    container_name: roundcube_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${RC_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${RC_DB_NAME}
+      MYSQL_USER: ${RC_DB_USER}
+      MYSQL_PASSWORD: ${RC_DB_PASSWORD}
+    volumes:
+      - roundcube_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - mail_net
+
+  nginx:
+    build: ./nginx
+    container_name: mail_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ssl_certs:/etc/nginx/ssl
+    depends_on:
+      - roundcube
+    restart: unless-stopped
+    networks:
+      - mail_net
+
+  backup:
+    build: ./backup
+    container_name: mail_backup
+    volumes:
+      - mail_data:/var/mail:ro
+      - ./backups:/backups:z
+    restart: unless-stopped
+    networks:
+      - mail_net
+
+networks:
+  mail_net:
+    driver: bridge
+
+volumes:
+  mail_data:
+  mail_state:
+  roundcube_db_data:
+  roundcube_temp:
+  ssl_certs:
