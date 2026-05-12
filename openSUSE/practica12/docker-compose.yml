@@ -71,7 +71,9 @@ services:
       - mail_net
 
   nginx:
-    build: ./nginx
+    build:
+      context: ./nginx
+      network: host
     container_name: mail_nginx
     ports:
       - "80:80"
@@ -85,7 +87,9 @@ services:
       - mail_net
 
   backup:
-    build: ./backup
+    build:
+      context: ./backup
+      network: host
     container_name: mail_backup
     volumes:
       - mail_data:/var/mail:ro
