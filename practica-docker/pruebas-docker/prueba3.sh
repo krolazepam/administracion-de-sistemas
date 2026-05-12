@@ -18,7 +18,7 @@ cat "$ARCHIVO_PRUEBA"
 espaciado
 
 paso 2 "Lo subimos por FTP con el usuario ftpuser"
-if curl -T "$ARCHIVO_PRUEBA" ftp://localhost/ --user dualy:snowy180405 -s -S; then
+if curl -T "$ARCHIVO_PRUEBA" ftp://localhost/ --user midori:Karol_21 -s -S; then
     nota "    archivo subido correctamente."
 fi
 espaciado

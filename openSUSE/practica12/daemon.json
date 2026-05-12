@@ -1,0 +1,6 @@
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<EOF
+{
+  "dns": ["8.8.8.8", "8.8.4.4"]
+}
+EOF

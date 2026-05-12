@@ -11,12 +11,12 @@ source "$(dirname "$0")/lib-mensajes.sh"
 titulo "Prueba 10.1 · Persistencia de la base de datos"
 
 paso 1 "Insertamos un usuario de prueba"
-docker exec infra_db psql -U dualy -d prueba1 -c \
-    "INSERT INTO usuarios (nombre, email, password) VALUES ('Prueba Persistencia', 'persist@test.com', 'hash_test');"
+docker exec infra_db psql -U midori -d practica10 -c \
+    "INSERT INTO usuarios (nombre, email, password) VALUES ('Paketaxo', 'pake@taxo.com', 'paketaxo');"
 espaciado
 
 paso 2 "Listamos los usuarios actuales"
-docker exec infra_db psql -U dualy -d prueba1 -c \
+docker exec infra_db psql -U midori -d practica10 -c \
     "SELECT id, nombre, email FROM usuarios;"
 espaciado
 
@@ -35,7 +35,7 @@ sleep 8
 espaciado
 
 paso 6 "Verificamos si los datos sobrevivieron"
-docker exec infra_db psql -U dualy -d prueba1 -c \
+docker exec infra_db psql -U midori -d practica10 -c \
     "SELECT id, nombre, email FROM usuarios;"
 
 fin "prueba 10.1" \

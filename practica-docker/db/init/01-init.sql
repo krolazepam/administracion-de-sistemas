@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- Datos de ejemplo para poder verificar persistencia (Prueba 10.1)
 INSERT INTO usuarios (nombre, email, password, rol) VALUES
     ('Admin',      'admin@infra.local',  'hash_placeholder_1', 'admin'),
-    ('Juan Pérez', 'juan@infra.local',   'hash_placeholder_2', 'user'),
-    ('Ana López',  'ana@infra.local',    'hash_placeholder_3', 'user');
+    ('Usuario Uno', 'usu1@infra.local',   'hash_placeholder_2', 'user'),
+    ('Usuario Dos',  'usu2@infra.local',    'hash_placeholder_3', 'user');
 
 -- Índice para búsquedas por email
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);

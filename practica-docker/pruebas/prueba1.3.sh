@@ -4,4 +4,4 @@ sleep 4
 
 # Comprueba que los datos del anterior docker sigan existiendo
 # Cambiar el ususario y la BD   
-docker exec -it infra_db psql -U dualy -d prueba1 -c "SELECT id, nombre, email FROM usuarios;"
+docker exec -it infra_db psql -U midori -d practica10 -c "SELECT id, nombre, email FROM usuarios;"
