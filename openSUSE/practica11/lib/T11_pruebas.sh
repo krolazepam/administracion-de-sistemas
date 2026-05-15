@@ -10,7 +10,10 @@ _separador_prueba() {
 _leer_env() {
     local env_file="$1"
     if [ -f "$env_file" ]; then
+        # Lee el archivo .env, ignora comentarios y exporta cada variable
+        set -a
         source "$env_file"
+        set +a
     else
         print_error "[ERROR] No se encontro .env en: $env_file"
         return 1

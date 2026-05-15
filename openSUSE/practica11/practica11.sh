@@ -2,7 +2,7 @@
 
 MAIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB="$MAIN_DIR/lib"
-COMPOSE_DIR="$MAIN_DIR"
+COMPOSE_DIR="$MAIN_DIR"  # Esto ahora es una ruta absoluta
 
 source "$LIB/colores.sh"
 source "$LIB/docker_install.sh"
